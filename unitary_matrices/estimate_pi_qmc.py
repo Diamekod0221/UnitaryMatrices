@@ -31,7 +31,7 @@ def _qmc_from_haar(n, seed=None, rng=None):
     return np.column_stack([x, y])
 
 
-def _qmc_from_ginibre(n, seed=None, rng=None):
+def qmc_from_ginibre(n, seed=None, rng=None):
     if rng is None:
         rng = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
     G = (rng.normal(size=(n,n)) + 1j*rng.normal(size=(n,n))) / np.sqrt(2.0)
@@ -64,7 +64,7 @@ def gen_points(method, R, seed):
         try:
             return qmc_from_ginibre(R, seed=seed)  # your function if present
         except NameError:
-            return _qmc_from_ginibre(R, seed=seed)
+            return qmc_from_ginibre(R, seed=seed)
     else:
         raise ValueError("Unknown method")
 
