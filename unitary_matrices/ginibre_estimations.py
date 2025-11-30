@@ -146,7 +146,7 @@ if __name__ == "__main__":
             n_runs=n_runs,
         )
 
-        csv_path: str = f"variance_vs_R_{method}.csv"
+        csv_path: str = f"../data/variance/variance_vs_R_{method}.csv"
         df_var.to_csv(csv_path, float_format="%.10f")
         print(f"Saved table -> {csv_path}")
 
