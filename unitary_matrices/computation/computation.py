@@ -87,3 +87,40 @@ def gen_points_blocked(method, R, seed):
 
     big = np.vstack(blocks)
     return big[:R]
+
+
+def gen_points_explicit_block(method, R, seed, B):
+    """
+    Blocked generator with explicit block size B.
+
+    R = total number of points desired
+    B = block size for each eigen / uniform block
+
+    If R % B != 0:
+        The last block is generated with size B, then truncated.
+
+    Always returns exactly R points.
+    """
+
+    if B < 1:
+        raise ValueError("Block size B must be >= 1")
+
+    num_blocks = (R + B - 1) // B  # ceil(R / B)
+    blocks = []
+
+    for i in range(num_blocks):
+        block_seed = None if seed is None else seed + i
+
+        if method == "CMC":
+            pts = cmc_points(B, seed=block_seed)
+        elif method == "haar":
+            pts = qmc_from_haar(B, seed=block_seed)
+        elif method == "ginibre":
+            pts = qmc_from_ginibre(B, seed=block_seed)
+        else:
+            raise ValueError(f"Unknown method: {method}")
+
+        blocks.append(pts)
+
+    big = np.vstack(blocks)
+    return big[:R]
