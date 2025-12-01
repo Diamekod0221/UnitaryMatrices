@@ -1,4 +1,3 @@
-
 from math import ceil, sqrt
 import numpy as np
 import numpy.linalg as la
@@ -121,6 +120,7 @@ def gen_points_explicit_block(method, R, seed, B):
             raise ValueError(f"Unknown method: {method}")
 
         blocks.append(pts)
+        print(f"Generated block {i + 1} of {num_blocks}")
 
     big = np.vstack(blocks)
     return big[:R]
