@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from computation import gen_points_explicit_block, estimate_pi
 
 def generate_results(size_block_map, seed):
@@ -38,7 +40,27 @@ def run_multiple_seeds(size_block_map, num_seeds):
     final_df = pd.concat(all_results, ignore_index=True)
     final_df.to_csv('results_multiple_seeds.csv', index=False)
 
+def visualize_results(csv_file):
+    df = pd.read_csv(csv_file)
+    melted_df = df.melt(id_vars=['block_size'], value_vars=['cmc_estimate', 'ginibre_estimate'], 
+                        var_name='method', value_name='estimated_val')
+
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(x='block_size', y='estimated_val', hue='method', data=melted_df, 
+                palette='Set2', showfliers=False)
+    plt.title('Estimates by Block Size')
+    plt.xlabel('Block Size')
+    plt.ylabel('Estimated Value')
+    plt.ylim(0, 4)  # Assuming estimates are in the range of pi
+    plt.axhline(y=3.14, color='r', linestyle='--', label='True Value of Pi')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig('results_boxplot.png')
+    plt.show()
+
 if __name__ == "__main__":
     size_block_map = {900: [900, 30, 3]}  # Example input
     num_seeds = 10  # Number of random seeds to generate
     run_multiple_seeds(size_block_map, num_seeds)
+    visualize_results('results_multiple_seeds.csv')
