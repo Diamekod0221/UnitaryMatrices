@@ -1,32 +1,39 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+from typing import List
+
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.linalg as la
-import matplotlib.pyplot as plt
-from typing import List, Tuple
+
+from config import GINIBRE_OUTPUT_DIR
+from unitary_matrices.ginibre.ginibre_iterative_fill import make_ginibre_matrix
+
 
 # ---------------------------
 # Raw Ginibre eigenvalues
 # ---------------------------
 def ginibre_eigenvalues(n: int, seed: int | None = None) -> np.ndarray:
-    rng = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
-    G = (rng.normal(size=(n, n)) + 1j * rng.normal(size=(n, n))) / np.sqrt(2.0)
-    lam = la.eigvals(G) / np.sqrt(n)   # scale so circle radius ~1
+    G = make_ginibre_matrix(n, seed)
+    lam = la.eigvals(G) / np.sqrt(n)  # scale so circle radius ~1
     return lam
+
 
 # ---------------------------
 # Helpers
 # ---------------------------
 def angle_colors_from_complex(z: np.ndarray) -> np.ndarray:
     theta = np.angle(z)  # (-pi, pi]
-    theta = (theta + 2*np.pi) % (2*np.pi)
-    return theta / (2*np.pi)
+    theta = (theta + 2 * np.pi) % (2 * np.pi)
+    return theta / (2 * np.pi)
+
 
 # ---------------------------
 # A: Scatterplots (complex plane)
 # ---------------------------
-def plot_scatter_complex(sizes: List[int], seed: int = 2024, out: str = "../data/ginibre_generation/ginibre_scatter_corrected.png") -> None:
+def plot_scatter_complex(sizes: List[int], seed: int = 2024,
+                         out: str = GINIBRE_OUTPUT_DIR / 'ginibre_scatter_corrected.png') -> None:
     fig, axes = plt.subplots(1, len(sizes), figsize=(14, 4), constrained_layout=True)
     cmap = "hsv"
     last_sc = None
@@ -55,11 +62,12 @@ def plot_scatter_complex(sizes: List[int], seed: int = 2024, out: str = "../data
 # ---------------------------
 # B: Radial histograms with theoretical overlay
 # ---------------------------
-def plot_radial_histograms(sizes: List[int], seed: int = 2024, bins: int = 40, out: str = "../data/ginibre_generation/ginibre_radial_corrected.png") -> None:
+def plot_radial_histograms(sizes: List[int], seed: int = 2024, bins: int = 40,
+                           out: str = GINIBRE_OUTPUT_DIR / 'ginibre_radial_corrected.png') -> None:
     fig, axes = plt.subplots(1, len(sizes), figsize=(14, 4), constrained_layout=True)
 
     r_theor = np.linspace(0.0, 1.0, 200)
-    f_r = 2.0 * r_theor   # theoretical radial density for uniform disk (0<=r<=1)
+    f_r = 2.0 * r_theor  # theoretical radial density for uniform disk (0<=r<=1)
 
     for ax, n in zip(axes, sizes):
         lam = ginibre_eigenvalues(n, seed)

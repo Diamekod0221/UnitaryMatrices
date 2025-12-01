@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import sys
+from typing import List, Tuple, Dict, Optional
+
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.linalg as la
-import matplotlib.pyplot as plt
 
-from typing import List, Tuple, Dict, Optional
-import sys
+from config import GINIBRE_OUTPUT_DIR
 
 # Try to import Hungarian solver; if not available we'll fallback to greedy
 try:
     from scipy.optimize import linear_sum_assignment  # type: ignore
+
     _HUNGARIAN_AVAILABLE = True
 except Exception:
     _HUNGARIAN_AVAILABLE = False
@@ -99,8 +102,8 @@ def match_indices(a: np.ndarray, b: np.ndarray) -> Tuple[np.ndarray, np.ndarray,
 
 
 def build_trajectories(
-    G: np.ndarray,
-    sizes: List[int]
+        G: np.ndarray,
+        sizes: List[int]
 ) -> Dict[int, List[complex]]:
     """
     Build trajectories of eigenvalues across the increasing principal submatrix sizes.
@@ -173,10 +176,10 @@ def build_trajectories(
 
 
 def plot_trajectories(
-    trajectories_detailed: List[List[Tuple[int, complex]]],
-    sizes: List[int],
-    seed: int,
-    output: str = "../data/ginibre_generation/ginibre_principal_minor_trajectories.png"
+        trajectories_detailed: List[List[Tuple[int, complex]]],
+        sizes: List[int],
+        seed: int,
+        output: str = GINIBRE_OUTPUT_DIR / 'ginibre_principal_minor_trajectories.png'
 ) -> None:
     """
     Plot trajectories (detailed sequences of (size, complex value)).
@@ -218,7 +221,7 @@ def plot_trajectories(
 
 def main():
     # user-configurable
-    sizes = [50, 100, 300]     # principal submatrix sizes to inspect (must be increasing)
+    sizes = [50, 100, 300]  # principal submatrix sizes to inspect (must be increasing)
     N_max = max(sizes)
     seed = 2024
 
