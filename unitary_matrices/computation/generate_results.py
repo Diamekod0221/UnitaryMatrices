@@ -24,7 +24,7 @@ def generate_results(size_block_map, seed):
                 'cmc_estimate': cmc_estimate,
                 'ginibre_estimate': ginibre_estimate
             })
-
+            
     # Create a DataFrame and save to CSV
     df = pd.DataFrame(results)
     return df
@@ -51,7 +51,7 @@ def visualize_results(csv_file):
     plt.title('Estimates by Block Size')
     plt.xlabel('Block Size')
     plt.ylabel('Estimated Value')
-    plt.ylim(0, 4)  # Assuming estimates are in the range of pi
+    plt.ylim(2.4, 3.4)  # Assuming estimates are in the range of pi
     plt.axhline(y=3.14, color='r', linestyle='--', label='True Value of Pi')
     plt.legend()
     plt.grid()
@@ -61,6 +61,6 @@ def visualize_results(csv_file):
 
 if __name__ == "__main__":
     size_block_map = {900: [900, 30, 3]}  # Example input
-    num_seeds = 10  # Number of random seeds to generate
+    num_seeds = 500  # Number of random seeds to generate
     run_multiple_seeds(size_block_map, num_seeds)
     visualize_results('results_multiple_seeds.csv')
