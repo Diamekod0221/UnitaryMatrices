@@ -1,82 +1,25 @@
 from math import pi
+from pathlib import Path
 
-import matplotlib.pyplot as plt
-import numpy as np
-import numpy.linalg as la
 import pandas as pd
-from tqdm.auto import tqdm  # progress bars
+from tqdm.auto import tqdm
 
+from unitary_matrices.computation.computation import (
+    estimate_pi,
+    gen_points_original as gen_points,
+)
 from unitary_matrices.config.config import PI_ESTIMATION_OUTPUT_DIR
+from unitary_matrices.plotting.plotting import plot_three_panels
 
 
-# ---------- Fallback implementations (used only if your versions aren't present) ----------
-def haar_unitary(n, rng):
-    Z = (rng.normal(size=(n, n)) + 1j * rng.normal(size=(n, n))) / np.sqrt(2.0)
-    Q, R = la.qr(Z)
-    d = np.diag(R)
-    Q = Q * (d / np.abs(d))
-    return Q
+def run_experiment(
+        Rs=(10, 50, 100, 200, 500, 1000, 2000),
+        R_chosen=500,
+        out=PI_ESTIMATION_OUTPUT_DIR,
+):
+    out = Path(out)
+    out.mkdir(exist_ok=True)
 
-
-def qmc_from_haar(n, seed=None, rng=None):
-    if rng is None:
-        rng = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
-
-    def haar_angles(n):
-        U = haar_unitary(n, rng)
-        eig = la.eigvals(U)
-        theta = np.angle(eig) % (2 * np.pi)
-        shift = rng.random()
-        return (theta / (2 * np.pi) + shift) % 1.0
-
-    x = haar_angles(n)
-    y = haar_angles(n)
-    return np.column_stack([x, y])
-
-
-def qmc_from_ginibre(n, seed=None, rng=None):
-    if rng is None:
-        rng = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
-    G = (rng.normal(size=(n, n)) + 1j * rng.normal(size=(n, n))) / np.sqrt(2.0)
-    lam = la.eigvals(G) / np.sqrt(n)
-    r = np.abs(lam)
-    theta = (np.angle(lam) % (2 * np.pi))
-    u = np.clip(r ** 2, 0.0, 1.0)
-    v = theta / (2 * np.pi)
-    return np.column_stack([u, v])
-
-
-# -----------------------------------------------------------------------------------------
-
-def cmc_points(n, seed=None):
-    rng = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
-    return rng.random((n, 2))
-
-
-def estimate_pi(points):
-    x, y = points[:, 0], points[:, 1]
-    inside = (x * x + y * y) <= 1.0
-    return 4.0 * np.count_nonzero(inside) / points.shape[0]
-
-
-def gen_points(method, R, seed):
-    if method == "CMC":
-        return cmc_points(R, seed=seed)
-    elif method == "haar":
-        try:
-            return qmc_from_haar(R, seed=seed)  # your function if present
-        except NameError:
-            return qmc_from_haar(R, seed=seed)
-    elif method == "ginibre":
-        try:
-            return qmc_from_ginibre(R, seed=seed)  # your function if present
-        except NameError:
-            return qmc_from_ginibre(R, seed=seed)
-    else:
-        raise ValueError("Unknown method")
-
-
-def run_experiment(Rs=(10, 50, 100, 200, 500, 1000, 2000), R_chosen=500, out=PI_ESTIMATION_OUTPUT_DIR):
     rows = []
     methods = [("CMC", 101), ("haar", 202), ("ginibre", 303)]
 
@@ -84,13 +27,14 @@ def run_experiment(Rs=(10, 50, 100, 200, 500, 1000, 2000), R_chosen=500, out=PI_
     with tqdm(total=len(Rs) * len(methods), desc="Total progress", position=0) as pbar_global:
         for R in Rs:
             print(f"\nEstimations for R={R}")
-            # per-R progress bar: three steps (one per method)
+
             with tqdm(total=len(methods), desc=f"R={R}", position=1, leave=False) as pbar_R:
-                # compute each estimator
                 vals = {}
+
                 for name, base_seed in methods:
                     pts = gen_points(name, R, seed=base_seed + R)
                     vals[name] = estimate_pi(pts)
+
                     pbar_R.update(1)
                     pbar_global.update(1)
 
@@ -101,38 +45,28 @@ def run_experiment(Rs=(10, 50, 100, 200, 500, 1000, 2000), R_chosen=500, out=PI_
                 "ginibre_val": vals["ginibre"], "ginibre_err": abs(vals["ginibre"] - pi),
             })
 
+    # ---- save table ----
     df = pd.DataFrame(rows).set_index("R")
     print("\nResults:\n", df.round(6))
+
     csv_path = out / "pi_estimates.csv"
     df.to_csv(csv_path, float_format="%.10f")
     print(f"Saved table -> {csv_path}")
 
-    # ----- one figure with 3 side-by-side panels -----
+    # ---- build 3-panel scatter figure ----
     pts_cmc = gen_points("CMC", R_chosen, seed=42)
     pts_haar = gen_points("haar", R_chosen, seed=43)
     pts_gin = gen_points("ginibre", R_chosen, seed=44)
 
-    titles = [f"CMC uniform (R={R_chosen})",
-              f"Haar-unitary (R={R_chosen})",
-              f"Ginibre (R={R_chosen})"]
-    pts_all = [pts_cmc, pts_haar, pts_gin]
+    titles = [
+        f"CMC uniform (R={R_chosen})",
+        f"Haar-unitary (R={R_chosen})",
+        f"Ginibre (R={R_chosen})",
+    ]
 
-    x_curve = np.linspace(0.0, 1.0, 700)
-    y_curve = np.sqrt(1.0 - x_curve * x_curve)
-
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-    for ax, pts, title in zip(axes, pts_all, titles):
-        ax.plot(x_curve, y_curve)
-        ax.plot([0, 1, 1, 0, 0], [0, 0, 1, 1, 0])
-        ax.scatter(pts[:, 0], pts[:, 1], s=8)
-        ax.set_aspect('equal', adjustable='box')
-        ax.set_xlim(0, 1);
-        ax.set_ylim(0, 1)
-        ax.set_title(title)
-    plt.tight_layout()
     fig_path = out / "pi_three_panels.png"
-    fig.savefig(fig_path, dpi=150)
-    plt.show()
+    plot_three_panels([pts_cmc, pts_haar, pts_gin], titles, fig_path)
+
     print(f"Saved figure -> {fig_path}")
 
 
