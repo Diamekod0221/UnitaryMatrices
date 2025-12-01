@@ -19,7 +19,7 @@ def run_experiment_blocked(
     out = Path(outdir)
     out.mkdir(exist_ok=True)
 
-    methods = [("CMC", 101), ("haar", 202), ("ginibre", 303)]
+    methods = [("CMC", 101), ("ginibre", 202)]
     rows = []
 
     with tqdm(total=len(Rs) * len(methods), desc="Total progress") as pbar:
@@ -46,8 +46,8 @@ def run_experiment_blocked(
 
                 vals[f"{name}_orig"] = pi_o
                 vals[f"{name}_block"] = pi_b
-                times[f"{name}_orig_t"] = t1 - t0
-                times[f"{name}_block_t"] = t3 - t2
+                times[f"{name}_orig_time"] = t1 - t0
+                times[f"{name}_block_time"] = t3 - t2
 
                 pbar.update(1)
 
