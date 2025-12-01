@@ -42,13 +42,16 @@ def run_multiple_seeds(size_block_map, num_seeds):
 
 def visualize_results(csv_file):
     df = pd.read_csv(csv_file)
-    melted_df = df.melt(id_vars=['block_size'], value_vars=['cmc_estimate', 'ginibre_estimate'], 
-                        var_name='method', value_name='estimated_val')
+
+    # Plot for CMC estimates
+    cmc_df = df[['block_size', 'cmc_estimate']]
+    melted_cmc_df = cmc_df.melt(id_vars=['block_size'], value_vars=['cmc_estimate'], 
+                                  var_name='method', value_name='estimated_val')
 
     plt.figure(figsize=(12, 6))
-    sns.boxplot(x='block_size', y='estimated_val', hue='method', data=melted_df, 
+    sns.boxplot(x='block_size', y='estimated_val', data=melted_cmc_df, 
                 palette='Set2', showfliers=False)
-    plt.title('Estimates by Block Size')
+    plt.title('CMC Estimates by Block Size')
     plt.xlabel('Block Size')
     plt.ylabel('Estimated Value')
     plt.ylim(2.4, 3.4)  # Assuming estimates are in the range of pi
@@ -56,8 +59,42 @@ def visualize_results(csv_file):
     plt.legend()
     plt.grid()
     plt.tight_layout()
-    plt.savefig('results_boxplot.png')
-    plt.show()
+    plt.savefig('results_cmc_boxplot.png')
+    plt.close()
+
+    # Plot for Ginibre estimates
+    ginibre_df = df[['block_size', 'ginibre_estimate']]
+    melted_ginibre_df = ginibre_df.melt(id_vars=['block_size'], value_vars=['ginibre_estimate'], 
+                                          var_name='method', value_name='estimated_val')
+
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(x='block_size', y='estimated_val', data=melted_ginibre_df, 
+                palette='Set2', showfliers=False)
+    plt.title('Ginibre Estimates by Block Size')
+    plt.xlabel('Block Size')
+    plt.ylabel('Estimated Value')
+    plt.ylim(2.4, 3.4)  # Assuming estimates are in the range of pi
+    plt.axhline(y=3.14, color='r', linestyle='--', label='True Value of Pi')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig('results_ginibre_boxplot.png')
+    plt.close()
+
+    # Combined plot
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(x='block_size', y='estimated_val', hue='method', data=pd.concat([melted_cmc_df, melted_ginibre_df]), 
+                palette='Set2', showfliers=False)
+    plt.title('Estimates by Block Size (CMC and Ginibre)')
+    plt.xlabel('Block Size')
+    plt.ylabel('Estimated Value')
+    plt.ylim(2.4, 3.4)  # Assuming estimates are in the range of pi
+    plt.axhline(y=3.14, color='r', linestyle='--', label='True Value of Pi')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig('results_combined_boxplot.png')
+    plt.close()
 
 if __name__ == "__main__":
     size_block_map = {900: [900, 30, 3]}  # Example input
