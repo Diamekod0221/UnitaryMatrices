@@ -27,5 +27,5 @@ def generate_results(size_block_map):
     df.to_csv('results.csv', index=False)
 
 if __name__ == "__main__":
-    size_block_map = {100: [10, 2, 3]}  # Example input
+    size_block_map = {900: [900, 30, 3,]}  # Example input
     generate_results(size_block_map)
