@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from typing import Callable, Dict, List, Tuple
 from pandas import DataFrame, Series
 
-from unitary_matrices.estimate_pi_qmc import qmc_from_ginibre, estimate_pi, cmc_points
+from unitary_matrices.pi_estimation.estimate_pi_qmc import qmc_from_ginibre, estimate_pi, cmc_points
 
 # =====================================================================
 # TYPE DEFINITIONS

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.linalg as la
 
-from config import GINIBRE_OUTPUT_DIR
+from unitary_matrices.config.config import GINIBRE_OUTPUT_DIR
 from unitary_matrices.ginibre.ginibre_iterative_fill import make_ginibre_matrix
 
 

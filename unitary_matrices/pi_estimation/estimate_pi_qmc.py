@@ -6,7 +6,7 @@ import numpy.linalg as la
 import pandas as pd
 from tqdm.auto import tqdm  # progress bars
 
-from unitary_matrices.config import PI_ESTIMATION_OUTPUT_DIR
+from unitary_matrices.config.config import PI_ESTIMATION_OUTPUT_DIR
 
 
 # ---------- Fallback implementations (used only if your versions aren't present) ----------

@@ -5,7 +5,7 @@ import numpy.linalg as la
 import matplotlib.pyplot as plt
 from typing import List
 
-from config import GINIBRE_OUTPUT_DIR
+from unitary_matrices.config.config import GINIBRE_OUTPUT_DIR
 
 
 def ginibre_eigenvalues(n: int, seed: int) -> np.ndarray:

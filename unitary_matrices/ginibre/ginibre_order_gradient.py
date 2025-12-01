@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import numpy as np
 import matplotlib.pyplot as plt
-import numpy.linalg as la
 
 from typing import Tuple
-from unitary_matrices.estimate_pi_qmc import qmc_from_ginibre
+from unitary_matrices.pi_estimation.estimate_pi_qmc import qmc_from_ginibre
 
 
 # ============================================================

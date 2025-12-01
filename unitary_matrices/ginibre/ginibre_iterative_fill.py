@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.linalg as la
 
-from config import GINIBRE_OUTPUT_DIR
+from unitary_matrices.config.config import GINIBRE_OUTPUT_DIR
 
 # Try to import Hungarian solver; if not available we'll fallback to greedy
 try:
