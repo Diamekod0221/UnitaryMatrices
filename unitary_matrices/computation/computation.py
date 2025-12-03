@@ -1,3 +1,4 @@
+import hashlib
 from math import ceil, sqrt
 import numpy as np
 import numpy.linalg as la
@@ -87,6 +88,10 @@ def gen_points_blocked(method, R, seed):
     big = np.vstack(blocks)
     return big[:R]
 
+def derive_seed(base, i):
+    h = hashlib.sha256(f"{base}-{i}".encode()).digest()
+    return int.from_bytes(h[:8], "little")
+
 
 def gen_points_explicit_block(method, R, seed, B):
     """
@@ -108,7 +113,7 @@ def gen_points_explicit_block(method, R, seed, B):
     blocks = []
 
     for i in range(num_blocks):
-        block_seed = None if seed is None else seed + i
+        block_seed = None if seed is None else derive_seed(seed, i)
 
         if method == "CMC":
             pts = cmc_points(B, seed=block_seed)

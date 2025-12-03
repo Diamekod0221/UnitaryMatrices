@@ -97,7 +97,7 @@ def visualize_results(csv_file):
     plt.close()
 
 if __name__ == "__main__":
-    size_block_map = {900: [900, 30, 3]}  # Example input
-    num_seeds = 500  # Number of random seeds to generate
+    size_block_map = {2500: [2500, 50, 2]}  # Example input
+    num_seeds = 500# Number of random seeds to generate
     run_multiple_seeds(size_block_map, num_seeds)
     visualize_results('results_multiple_seeds.csv')
