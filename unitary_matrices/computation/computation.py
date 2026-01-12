@@ -13,20 +13,31 @@ def haar_unitary(n, rng):
     d = np.diag(R)
     Q = Q * (d / np.abs(d))
     return Q
+import numpy as np
+import scipy.linalg as la
 
-def qmc_from_haar(n, seed=None, rng=None):
-    if rng is None:
-        rng = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
+def qmc_from_haar(n, seed=None):
+    rng_x = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
+    rng_y = np.random.default_rng(np.random.PCG64(seed + 11 if seed is not None else 1357))
 
-    def haar_angles(n):
+    def haar_vector_phases(n, rng):
+        # Haar unitary
         U = haar_unitary(n, rng)
-        eig = la.eigvals(U)
-        theta = np.angle(eig) % (2 * np.pi)
-        shift = rng.random()
-        return (theta / (2 * np.pi) + shift) % 1.0
 
-    x = haar_angles(n)
-    y = haar_angles(n)
+        # Eigenvectors (columns are orthonormal, Haar-distributed)
+        _, V = la.eig(U)
+
+        # Take phases of a fixed component across eigenvectors
+        # (row 0 is arbitrary but consistent)
+        phases = np.angle(V[0, :]) % (2 * np.pi)
+
+        # Cranley–Patterson random shift
+        shift = rng.random()
+        return (phases / (2 * np.pi) + shift) % 1.0
+
+    x = haar_vector_phases(n, rng_x)
+    y = haar_vector_phases(n, rng_y)
+
     return np.column_stack([x, y])
 
 def qmc_from_ginibre(n, seed=None, rng=None):
