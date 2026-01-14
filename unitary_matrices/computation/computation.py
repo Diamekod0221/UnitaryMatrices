@@ -51,6 +51,57 @@ def qmc_from_ginibre(n, seed=None, rng=None):
     v = theta / (2 * np.pi)
     return np.column_stack([u, v])
 
+def qmc_from_ginibre_kostlan(n, seed=None, rng=None):
+    if rng is None:
+        rng = np.random.default_rng(
+            np.random.PCG64(seed if seed is not None else 12345)
+        )
+
+    # Kostlan theorem:
+    # r_k^2 ~ Gamma(k, 1), independently
+    k = np.arange(1, n + 1)
+    r2 = rng.gamma(shape=k, scale=1.0)
+
+    # Normalize by sqrt(n) to match circular law
+    r = np.sqrt(r2 / n)
+
+    # Independent uniform angles
+    theta = rng.uniform(0.0, 2.0 * np.pi, size=n)
+
+    # Same mapping you already use
+    u = np.clip(r**2, 0.0, 1.0)
+    v = theta / (2.0 * np.pi)
+
+    return np.column_stack([u, v])
+
+def qmc_from_ginibre_kostlan_blocked(
+    n, B, seed=None
+):
+    rng = np.random.default_rng(
+        np.random.PCG64(seed if seed is not None else 12345)
+    )
+
+    blocks = []
+    k_start = 1
+
+    while k_start <= n:
+        k_end = min(k_start + B - 1, n)
+        k = np.arange(k_start, k_end + 1)
+
+        r2 = rng.gamma(shape=k, scale=1.0)
+        r = np.sqrt(r2 / n)
+
+        theta = rng.uniform(0.0, 2.0 * np.pi, size=len(k))
+
+        u = np.clip(r**2, 0.0, 1.0)
+        v = theta / (2.0 * np.pi)
+
+        blocks.append(np.column_stack([u, v]))
+        k_start = k_end + 1
+
+    return np.vstack(blocks)
+
+
 def cmc_points(n, seed=None):
     rng = np.random.default_rng(np.random.PCG64(seed if seed is not None else 12345))
     return rng.random((n, 2))
@@ -71,6 +122,8 @@ def gen_points_original(method, R, seed):
         return qmc_from_haar(R, seed=seed)
     elif method == "ginibre":
         return qmc_from_ginibre(R, seed=seed)
+    elif method == "kostlan":
+        return qmc_from_ginibre_kostlan(R, seed=seed)
     else:
         raise ValueError(f"Unknown method: {method}")
 
@@ -91,6 +144,8 @@ def gen_points_blocked(method, R, seed):
             pts = qmc_from_haar(s, seed=block_seed)
         elif method == "ginibre":
             pts = qmc_from_ginibre(s, seed=block_seed)
+        elif method == "kostlan":
+            return qmc_from_ginibre_kostlan(R, seed=seed)
         else:
             raise ValueError(f"Unknown method: {method}")
 
@@ -132,6 +187,8 @@ def gen_points_explicit_block(method, R, seed, B):
             pts = qmc_from_haar(B, seed=block_seed)
         elif method == "ginibre":
             pts = qmc_from_ginibre(B, seed=block_seed)
+        elif method == "kostlan":
+            return qmc_from_ginibre_kostlan(R, seed=seed)
         else:
             raise ValueError(f"Unknown method: {method}")
 

@@ -13,7 +13,7 @@ from unitary_matrices.plotting.plotting import plot_three_panels
 
 
 def run_experiment(
-        Rs=(10, 50, 100, 200, 500, 1000, 2000),
+        Rs=(10, 50, 100, 200, 500, 1000, 6000),
         R_chosen=500,
         out=PI_ESTIMATION_OUTPUT_DIR,
 ):
@@ -49,7 +49,7 @@ def run_experiment(
     df = pd.DataFrame(rows).set_index("R")
     print("\nResults:\n", df.round(6))
 
-    csv_path = out / "pi_estimates.csv"
+    csv_path = out / "pi_estimates_iidhaar.csv"
     df.to_csv(csv_path, float_format="%.10f")
     print(f"Saved table -> {csv_path}")
 
@@ -59,12 +59,12 @@ def run_experiment(
     pts_gin = gen_points("ginibre", R_chosen, seed=44)
 
     titles = [
-        f"CMC uniform (R={R_chosen})",
+        f"PCG64 uniform (R={R_chosen})",
         f"Haar-unitary (R={R_chosen})",
         f"Ginibre (R={R_chosen})",
     ]
 
-    fig_path = out / "pi_three_panels.png"
+    fig_path = out / "pi_three_panels_iidhaar.png"
     plot_three_panels([pts_cmc, pts_haar, pts_gin], titles, fig_path)
 
     print(f"Saved figure -> {fig_path}")
