@@ -6,50 +6,125 @@ from unitary_matrices.config.config import CIRCLES_OUTPUT_DIR
 from unitary_matrices.sampling.sample_ginibre import ginibre_eigs_scaled
 
 
-def kostlan_ginibre(n, rng):
-    k = np.arange(1, n + 1)
-    r2 = rng.gamma(shape=k, scale=1.0)     # exact Kostlan law
+def kostlan_ginibre_with_order(n, rng):
+    k = np.arange(1, n + 1)                 # generation index
+    r2 = rng.gamma(shape=k, scale=1.0)      # Gamma(k,1)
     theta = rng.uniform(0, 2*np.pi, size=n)
 
-    z = np.sqrt(r2) * np.exp(1j * theta)   # complex plane
-    return z / np.sqrt(n)                  # same scaling as Ginibre
+    z = np.sqrt(r2) * np.exp(1j * theta)
+    z /= np.sqrt(n)
+
+    return z, k
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def plot_kostlan_with_radial_grid(z, k, outdir):
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    sc = ax.scatter(
+        z.real, z.imag,
+        c=k,
+        cmap="viridis",
+        s=18,
+        alpha=0.85
+    )
+
+    # Radial reference circles
+    for r in np.linspace(0.1, 1.0, 10):
+        circle = plt.Circle(
+            (0, 0),
+            r,
+            color="black",
+            linewidth=0.6,
+            alpha=0.15,
+            fill=False
+        )
+        ax.add_artist(circle)
+
+    ax.set_aspect("equal")
+    ax.set_xlim(-1.05, 1.05)
+    ax.set_ylim(-1.05, 1.05)
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    plt.colorbar(sc, ax=ax, label="generation index k")
+    ax.set_title("Kostlan Ginibre points with radial grid (Δr = 0.1)")
+    if outdir is not None:
+        out = outdir / f"kostlan_generation_colored_{k.size}.png"
+        fig.savefig(out, dpi=150)
+
+    plt.show()
+    
+
+def linear_stats(z):
+        r = np.abs(z)
+        return {
+            "mean_r2": np.mean(r ** 2),
+            "mean_r4": np.mean(r ** 4),
+            "mean_exp": np.mean(np.exp(-5 * r ** 2)),
+        }
+
+def compare_ginibre_vs_kostlan(
+            ginibre: np.ndarray,
+            kostlan: np.ndarray,
+            n: int,
+            outdir=None,
+    ):
+        """
+        Compare Ginibre eigenvalues and Kostlan points.
+
+        - Runs KS test on radii
+        - Produces side-by-side scatter plots
+        - Optionally saves figure
+        """
+
+        # --- Radial KS test ---
+        r_g = np.abs(ginibre)
+        r_k = np.abs(kostlan)
+        ks = ks_2samp(r_g, r_k)
+        print("Radial KS test:", ks)
+
+        print("Linear stat for ginibre:", linear_stats(ginibre))
+        print("Linear stat for kostlan :", linear_stats(kostlan))
+
+        # --- Plot ---
+        fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+
+        axes[0].scatter(ginibre.real, ginibre.imag, s=20)
+        axes[0].set_title(f"Ginibre eigenvalues (n={n})")
+        axes[0].set_xlim(-1.1, 1.1)
+        axes[0].set_ylim(-1.1, 1.1)
+        axes[0].set_aspect("equal")
+
+        axes[1].scatter(kostlan.real, kostlan.imag, s=20)
+        axes[1].set_title(f"Kostlan points (n={n})")
+        axes[1].set_xlim(-1.1, 1.1)
+        axes[1].set_ylim(-1.1, 1.1)
+        axes[1].set_aspect("equal")
+
+        fig.tight_layout()
+
+        # --- Save if requested ---
+        if outdir is not None:
+            out = outdir / f"ginibre_vs_kostlan_{n}.png"
+            fig.savefig(out, dpi=150)
+
+        plt.show()
+
+        return ks
 
 
-def demo(n=1000, outfile=CIRCLES_OUTPUT_DIR):
+
+def demo(n=1000, outdir=CIRCLES_OUTPUT_DIR):
     rng = np.random.default_rng(12345)
     ginibre = ginibre_eigs_scaled( n, rng)
 
     # Haar-based points (your current method)
-    kost_points = kostlan_ginibre( n, rng)
+    kost_points, kost_order = kostlan_ginibre_with_order( n, rng)
 
-
-    r_g = np.abs(ginibre)
-    r_k = np.abs(kost_points)
-
-    print(ks_2samp(r_g, r_k))
-
-    plt.figure(figsize=(8, 4))
-
-    # --- Left: CMC ---
-    plt.subplot(1, 2, 1)
-    plt.scatter(ginibre.real, ginibre.imag, s=20)
-    plt.title(f"Ginibre eigenvals (n={n})")
-    plt.xlim(-1.1, 1.1)
-    plt.ylim(-1.1, 1.1)
-
-    # --- Right: kostlan ---
-    plt.subplot(1, 2, 2)
-    plt.scatter(kost_points.real, kost_points.imag, s=20)
-    plt.title(f"Kostlan points (n={n})")
-    plt.axis("equal")
-    plt.xlim(-1.1, 1.1)
-    plt.ylim(-1.1, 1.1)
-
-    plt.tight_layout()
-
-    out = outfile / f"ginibre_vs_kostlan_{n}"
-    plt.savefig(out, dpi=150)
-    plt.show()
+    compare_ginibre_vs_kostlan(ginibre, kost_points, n, outdir)
+    plot_kostlan_with_radial_grid(kost_points, kost_order, outdir)
 
 
 if __name__ == "__main__":
