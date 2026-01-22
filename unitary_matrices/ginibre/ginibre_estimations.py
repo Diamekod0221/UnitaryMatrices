@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 from typing import Callable, Dict, List, Tuple
 from pandas import DataFrame, Series
 
-from unitary_matrices.pi_estimation.estimate_pi_qmc import qmc_from_ginibre, estimate_pi, cmc_points
+from unitary_matrices.computation.computation import qmc_from_ginibre, estimate_pi, cmc_points
+from unitary_matrices.config.config import DATA_DIR
 
 # =====================================================================
 # TYPE DEFINITIONS
@@ -119,9 +120,9 @@ def plot_variance(df_var: DataFrame, method: str, output: str | None = None) -> 
 
     plt.figure(figsize=(6, 4))
     plt.plot(df_var.index, df_var["variance"], marker="o")
-    plt.xlabel("R (sample size)")
-    plt.ylabel("Variance of |π_est − π|")
-    plt.title(f"{method.upper()} ensemble: Error variance vs R")
+    plt.xlabel("Sample size")
+    plt.ylabel("Variance of |estimator − π|")
+    plt.title(f"{method.upper()}: Error variance vs sample size")
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(output, dpi=150)
@@ -134,7 +135,7 @@ def plot_variance(df_var: DataFrame, method: str, output: str | None = None) -> 
 # =====================================================================
 if __name__ == "__main__":
 
-    R_values: List[int] = [100, 500, 1000, 1500]
+    R_values: List[int] = [50, 100, 500, 1000, 1500, 2000, 3000]
     n_runs: int = 200
 
     for method in ["ginibre", "cmc"]:
@@ -146,7 +147,7 @@ if __name__ == "__main__":
             n_runs=n_runs,
         )
 
-        csv_path: str = f"../data/variance/variance_vs_R_{method}.csv"
+        csv_path: str = f"{DATA_DIR}/variance/variance_vs_R_{method}.csv"
         df_var.to_csv(csv_path, float_format="%.10f")
         print(f"Saved table -> {csv_path}")
 
