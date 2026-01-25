@@ -13,7 +13,7 @@ from unitary_matrices.plotting.plotting import plot_three_panels
 
 
 def run_experiment(
-        Rs=(10, 50, 100, 200, 500, 1000, 6000),
+        Rs=(10, 50, 100, 200, 500, 1000, 2000, 4000, 6000, 8000),
         R_chosen=500,
         out=PI_ESTIMATION_OUTPUT_DIR,
 ):
@@ -21,7 +21,7 @@ def run_experiment(
     out.mkdir(exist_ok=True)
 
     rows = []
-    methods = [("CMC", 101), ("haar", 202), ("ginibre", 303)]
+    methods = [("CMC", 101), ("kostlan", 1107), ("ginibre", 3)]
 
     # ----- global progress -----
     with tqdm(total=len(Rs) * len(methods), desc="Total progress", position=0) as pbar_global:
@@ -41,7 +41,7 @@ def run_experiment(
             rows.append({
                 "R": R,
                 "CMC_val": vals["CMC"], "CMC_err": abs(vals["CMC"] - pi),
-                "haar_val": vals["haar"], "haar_err": abs(vals["haar"] - pi),
+                "kostlan_val": vals["kostlan"], "kostlan_err": abs(vals["kostlan"] - pi),
                 "ginibre_val": vals["ginibre"], "ginibre_err": abs(vals["ginibre"] - pi),
             })
 
@@ -49,22 +49,22 @@ def run_experiment(
     df = pd.DataFrame(rows).set_index("R")
     print("\nResults:\n", df.round(6))
 
-    csv_path = out / "pi_estimates_iidhaar.csv"
+    csv_path = out / "pi_estimates_kostlan_ginibre.csv"
     df.to_csv(csv_path, float_format="%.10f")
     print(f"Saved table -> {csv_path}")
 
     # ---- build 3-panel scatter figure ----
     pts_cmc = gen_points("CMC", R_chosen, seed=42)
-    pts_haar = gen_points("haar", R_chosen, seed=43)
+    pts_haar = gen_points("kostlan", R_chosen, seed=43)
     pts_gin = gen_points("ginibre", R_chosen, seed=44)
 
     titles = [
         f"PCG64 uniform (R={R_chosen})",
-        f"Haar-unitary (R={R_chosen})",
+        f"Kostlan (R={R_chosen})",
         f"Ginibre (R={R_chosen})",
     ]
 
-    fig_path = out / "pi_three_panels_iidhaar.png"
+    fig_path = out / "pi_three_panels_kostlan_ginibre.png"
     plot_three_panels([pts_cmc, pts_haar, pts_gin], titles, fig_path)
 
     print(f"Saved figure -> {fig_path}")

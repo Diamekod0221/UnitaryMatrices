@@ -51,12 +51,7 @@ def qmc_from_ginibre(n, seed=None, rng=None):
     v = theta / (2 * np.pi)
     return np.column_stack([u, v])
 
-def qmc_from_ginibre_kostlan(n, seed=None, rng=None):
-    if rng is None:
-        rng = np.random.default_rng(
-            np.random.PCG64(seed if seed is not None else 12345)
-        )
-
+def kostlan(n, rng):
     # Kostlan theorem:
     # r_k^2 ~ Gamma(k, 1), independently
     k = np.arange(1, n + 1)
@@ -67,8 +62,16 @@ def qmc_from_ginibre_kostlan(n, seed=None, rng=None):
 
     # Independent uniform angles
     theta = rng.uniform(0.0, 2.0 * np.pi, size=n)
+    return np.column_stack([r, theta])
 
-    # Same mapping you already use
+def qmc_from_ginibre_kostlan(n, seed=None, rng=None):
+    if rng is None:
+        rng = np.random.default_rng(
+            np.random.PCG64(seed if seed is not None else 12345)
+        )
+
+    r,theta = kostlan(n, rng).T
+
     u = np.clip(r**2, 0.0, 1.0)
     v = theta / (2.0 * np.pi)
 
