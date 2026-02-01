@@ -1,5 +1,6 @@
 from math import pi
 from pathlib import Path
+from time import perf_counter
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -13,9 +14,9 @@ from unitary_matrices.plotting.plotting import plot_three_panels
 
 
 def run_experiment(
-        Rs=(10, 50, 100, 200, 500, 1000, 2000, 4000, 6000, 8000),
-        R_chosen=500,
-        out=PI_ESTIMATION_OUTPUT_DIR,
+    Rs=(10, 50, 100, 200, 500, 1000, 2000, 4000),
+    R_chosen=500,
+    out=PI_ESTIMATION_OUTPUT_DIR,
 ):
     out = Path(out)
     out.mkdir(exist_ok=True)
@@ -23,16 +24,19 @@ def run_experiment(
     rows = []
     methods = [("CMC", 101), ("kostlan", 1107), ("ginibre", 3)]
 
-    # ----- global progress -----
     with tqdm(total=len(Rs) * len(methods), desc="Total progress", position=0) as pbar_global:
         for R in Rs:
             print(f"\nEstimations for R={R}")
 
             with tqdm(total=len(methods), desc=f"R={R}", position=1, leave=False) as pbar_R:
                 vals = {}
+                times = {}
 
                 for name, base_seed in methods:
+                    t0 = perf_counter()
                     pts = gen_points(name, R, seed=base_seed + R)
+                    times[name] = perf_counter() - t0
+
                     vals[name] = estimate_pi(pts)
 
                     pbar_R.update(1)
@@ -40,20 +44,28 @@ def run_experiment(
 
             rows.append({
                 "R": R,
-                "CMC_val": vals["CMC"], "CMC_err": abs(vals["CMC"] - pi),
-                "kostlan_val": vals["kostlan"], "kostlan_err": abs(vals["kostlan"] - pi),
-                "ginibre_val": vals["ginibre"], "ginibre_err": abs(vals["ginibre"] - pi),
+
+                "CMC_val": vals["CMC"],
+                "CMC_err": abs(vals["CMC"] - pi),
+                "CMC_gen_time_s": times["CMC"],
+
+                "kostlan_val": vals["kostlan"],
+                "kostlan_err": abs(vals["kostlan"] - pi),
+                "kostlan_gen_time_s": times["kostlan"],
+
+                "ginibre_val": vals["ginibre"],
+                "ginibre_err": abs(vals["ginibre"] - pi),
+                "ginibre_gen_time_s": times["ginibre"],
             })
 
-    # ---- save table ----
     df = pd.DataFrame(rows).set_index("R")
     print("\nResults:\n", df.round(6))
 
-    csv_path = out / "pi_estimates_kostlan_ginibre.csv"
+    csv_path = out / "pi_estimates_with_generation_times.csv"
     df.to_csv(csv_path, float_format="%.10f")
     print(f"Saved table -> {csv_path}")
 
-    # ---- build 3-panel scatter figure ----
+    # ---- visualization (unchanged) ----
     pts_cmc = gen_points("CMC", R_chosen, seed=42)
     pts_haar = gen_points("kostlan", R_chosen, seed=43)
     pts_gin = gen_points("ginibre", R_chosen, seed=44)
@@ -66,7 +78,6 @@ def run_experiment(
 
     fig_path = out / "pi_three_panels_kostlan_ginibre.png"
     plot_three_panels([pts_cmc, pts_haar, pts_gin], titles, fig_path)
-
     print(f"Saved figure -> {fig_path}")
 
 
