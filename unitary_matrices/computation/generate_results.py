@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from computation import gen_points_explicit_block, estimate_pi
+from computation import gen_points_explicit_block, estimate_pi, qmc_from_ginibre_kostlan_blocked
+
 
 def generate_results(size_block_map, seed):
     results = []
@@ -14,7 +15,7 @@ def generate_results(size_block_map, seed):
             cmc_estimate = estimate_pi(cmc_points)
 
             # Generate points for Ginibre
-            ginibre_points = gen_points_explicit_block("ginibre", size, seed=seed, B=block_size)
+            ginibre_points = qmc_from_ginibre_kostlan_blocked(size, seed=seed, B=block_size)
             ginibre_estimate = estimate_pi(ginibre_points)
 
             results.append({
@@ -70,7 +71,7 @@ def visualize_results(csv_file):
     plt.figure(figsize=(12, 6))
     sns.boxplot(x='block_size', y='estimated_val', data=melted_ginibre_df, 
                 palette='Set2', showfliers=False)
-    plt.title('Ginibre Estimates by Block Size')
+    plt.title('Kostlan Estimates by Block Size')
     plt.xlabel('Block Size')
     plt.ylabel('Estimated Value')
     plt.ylim(2.4, 3.4)  # Assuming estimates are in the range of pi
@@ -85,7 +86,7 @@ def visualize_results(csv_file):
     plt.figure(figsize=(12, 6))
     sns.boxplot(x='block_size', y='estimated_val', hue='method', data=pd.concat([melted_cmc_df, melted_ginibre_df]), 
                 palette='Set2', showfliers=False)
-    plt.title('Estimates by Block Size (CMC and Ginibre)')
+    plt.title('Estimates by Block Size (CMC and Kostlan)')
     plt.xlabel('Block Size')
     plt.ylabel('Estimated Value')
     plt.ylim(2.4, 3.4)  # Assuming estimates are in the range of pi
@@ -97,7 +98,7 @@ def visualize_results(csv_file):
     plt.close()
 
 if __name__ == "__main__":
-    size_block_map = {2500: [2500, 50, 2]}  # Example input
-    num_seeds = 500# Number of random seeds to generate
+    size_block_map = {4900: [4900, 70, 2]}  # Example input
+    num_seeds = 100# Number of random seeds to generate
     run_multiple_seeds(size_block_map, num_seeds)
-    visualize_results('results_multiple_seeds.csv')
+    visualize_results('../../data/ginibre_generation/results_multiple_seeds.csv')

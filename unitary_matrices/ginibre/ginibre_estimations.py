@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from typing import Callable, Dict, List, Tuple
 from pandas import DataFrame, Series
 
-from unitary_matrices.computation.computation import qmc_from_ginibre, estimate_pi, cmc_points
+from unitary_matrices.computation.computation import qmc_from_ginibre, estimate_pi, cmc_points, qmc_from_ginibre_kostlan
 from unitary_matrices.config.config import DATA_DIR
 
 # =====================================================================
@@ -31,6 +31,7 @@ and returns an (R, 2) NumPy array of 2D points.
 POINT_GENERATORS: Dict[str, PointGenerator] = {
     "ginibre": lambda R, seed: qmc_from_ginibre(R, seed=seed),
     "cmc":     lambda R, seed: cmc_points(R, seed=seed),
+    "kostlan": lambda R, seed: qmc_from_ginibre_kostlan(R, seed=seed),
 }
 
 
@@ -138,7 +139,7 @@ if __name__ == "__main__":
     R_values: List[int] = [50, 100, 500, 1000, 1500, 2000, 3000]
     n_runs: int = 200
 
-    for method in ["ginibre", "cmc"]:
+    for method in ["cmc", "kostlan", "ginibre"]:
         print(f"\n=== Running variance sweep for {method.upper()} ===")
 
         df_var: DataFrame = sweep_R_values(
