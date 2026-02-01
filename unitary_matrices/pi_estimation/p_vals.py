@@ -15,10 +15,10 @@ from unitary_matrices.computation.computation import (
 # CONFIG
 # ============================================================
 
-SAMPLE_SIZE = 1000
-N_RUNS = 200
+SAMPLE_SIZE = 500
+N_RUNS = 500
 BASE_SEED = 10000
-N_BINS = 30  # per axis for 2D chi^2
+N_BINS = 10  # per axis for 2D chi^2
 
 # ============================================================
 # POINT GENERATORS (assumed to exist)
@@ -36,17 +36,19 @@ POINT_GENERATORS = {
 # ============================================================
 
 def chi2_2d_uniform(points, n_bins):
-    """
-    2D chi-square test on [0,1]^2 grid
-    """
     hist, _, _ = np.histogram2d(
         points[:, 0],
         points[:, 1],
         bins=n_bins,
         range=[[0, 1], [0, 1]]
     )
-    observed = hist.flatten()
-    expected = np.full_like(observed, observed.mean())
+
+    observed = hist.ravel()
+    n = observed.sum()
+    k = observed.size
+
+    expected = np.full(k, n / k)
+
     _, pval = chisquare(observed, expected)
     return pval
 
@@ -74,6 +76,7 @@ results = {
 }
 
 for run in range(N_RUNS):
+    print(f"Run {run}")
     seed = BASE_SEED + run
 
     for name, gen in POINT_GENERATORS.items():
@@ -115,7 +118,7 @@ for name in POINT_GENERATORS:
     plt.subplot(3, len(POINT_GENERATORS), i)
     plot_pvals(results[name]["ks_y"], f"{name} – KS y")
     i += 1
-
+plt.savefig(f"p_vals_tests.png", dpi=300)
 plt.tight_layout()
 plt.show()
 
