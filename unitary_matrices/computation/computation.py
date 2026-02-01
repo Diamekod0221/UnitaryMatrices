@@ -2,6 +2,8 @@ import hashlib
 from math import ceil, sqrt
 import numpy as np
 import numpy.linalg as la
+from scipy.stats import norm
+
 
 # -----------------------------
 #  Basic primitives
@@ -113,6 +115,18 @@ def estimate_pi(points):
     x, y = points[:, 0], points[:, 1]
     inside = (x * x + y * y) <= 1.0
     return 4.0 * np.count_nonzero(inside) / points.shape[0]
+
+def estimate_call_mc(z, S0, K, r, sigma, T):
+    ST = S0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * z)
+    payoff = np.maximum(ST - K, 0.0)
+    return np.exp(-r * T) * payoff.mean()
+
+def call_bs(S0, K, r, sigma, T):
+    d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    return S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+
 
 # -----------------------------
 #  Original & blocked generators

@@ -9,3 +9,4 @@ GINIBRE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 HAAR_OUTPUT_DIR: Path = DATA_DIR / "haar_generation"
 CIRCLES_OUTPUT_DIR: Path = DATA_DIR / "circles"
 PI_ESTIMATION_OUTPUT_DIR: Path = DATA_DIR / "pi_estimation"
+CALL_ESTIMATION_OUTPUT_DIR: Path = DATA_DIR / "call_estimation"
