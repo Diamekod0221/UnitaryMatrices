@@ -4,3 +4,5 @@ pandas
 tqdm
 scipy
 seaborn
+pted
+jinja2

@@ -6,13 +6,12 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 from unitary_matrices.computation.computation import (
-    estimate_call_mc,
-    call_bs,
-    gen_points_original as gen_points,
+    estimate_truth_mc,
+    gen_points_original as gen_points, estimate_2d_call, gaussian_copula_remap,
 )
 from unitary_matrices.config.config import CALL_ESTIMATION_OUTPUT_DIR
 
-def plot_convergence(df, bs_price, out_path):
+def plot_convergence(df, truth_line, out_path):
     plt.figure(figsize=(8, 5))
 
     for method in ["CMC", "kostlan", "ginibre"]:
@@ -24,7 +23,7 @@ def plot_convergence(df, bs_price, out_path):
         )
 
     plt.axhline(
-        bs_price,
+        truth_line,
         linestyle="--",
         linewidth=2,
         label="Black–Scholes",
@@ -46,15 +45,10 @@ def run_experiment(
     Rs=(10, 50, 100, 200, 500, 1000, 2000, 4000, 6000),
     out=CALL_ESTIMATION_OUTPUT_DIR,
 ):
-    # ---- option params ----
-    S0 = 100.0
-    K = 100.0
-    r = 0.05
-    sigma = 0.2
-    T = 1.0
 
-    bs_price = call_bs(S0, K, r, sigma, T)
-    print("Real price:", bs_price)
+    rho = 0.7
+    truth_line = estimate_truth_mc(rho=rho)
+    print("Real price:", truth_line)
 
     out = Path(out)
     out.mkdir(exist_ok=True)
@@ -75,8 +69,9 @@ def run_experiment(
                     pts = gen_points(name, R, seed=base_seed + R)
                     times[name] = perf_counter() - t0
 
-                    z = pts[:, 0]  # interpret first coord as N(0,1)
-                    vals[name] = estimate_call_mc(z, S0, K, r, sigma, T)
+                    remap = gaussian_copula_remap(pts, rho)
+
+                    vals[name] = estimate_2d_call(remap)
 
                     pbar_R.update(1)
                     pbar_global.update(1)
@@ -85,15 +80,15 @@ def run_experiment(
                 "R": R,
 
                 "CMC_val": vals["CMC"],
-                "CMC_err": abs(vals["CMC"] - bs_price),
+                "CMC_err": abs(vals["CMC"] - truth_line),
                 "CMC_gen_time_s": times["CMC"],
 
                 "kostlan_val": vals["kostlan"],
-                "kostlan_err": abs(vals["kostlan"] - bs_price),
+                "kostlan_err": abs(vals["kostlan"] - truth_line),
                 "kostlan_gen_time_s": times["kostlan"],
 
                 "ginibre_val": vals["ginibre"],
-                "ginibre_err": abs(vals["ginibre"] - bs_price),
+                "ginibre_err": abs(vals["ginibre"] - truth_line),
                 "ginibre_gen_time_s": times["ginibre"],
             })
 
@@ -105,7 +100,7 @@ def run_experiment(
     print(f"Saved table -> {csv_path}")
 
     fig_path = out / "call_convergence_vs_N.png"
-    plot_convergence(df, bs_price, fig_path)
+    plot_convergence(df, truth_line, fig_path)
     print(f"Saved convergence plot -> {fig_path}")
 
 

@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from pted import pted
 
 from scipy.stats import ks_2samp
 from unitary_matrices.config.config import CIRCLES_OUTPUT_DIR
@@ -65,6 +66,41 @@ def linear_stats(z):
             "mean_exp": np.mean(np.exp(-5 * r ** 2)),
         }
 
+
+def pted_in_R2(eigvals: np.ndarray, comparison_pts: np.ndarray):
+    """
+    Two-sample PTED test in R^2.
+
+    Parameters
+    ----------
+    eigvals : np.ndarray
+        Complex eigenvalues, shape (n,)
+    comparison_pts : np.ndarray
+        Either:
+        - complex array of shape (m,), or
+        - real array of shape (m, 2) with (x, y)
+
+    Returns
+    -------
+    float
+        p-value from PTED
+    """
+
+    # --- Ginibre eigenvalues → R^2 ---
+    X = np.column_stack([eigvals.real, eigvals.imag])
+
+    # --- Comparison points → R^2 ---
+    if np.iscomplexobj(comparison_pts):
+        Y = np.column_stack([comparison_pts.real, comparison_pts.imag])
+    else:
+        comparison_pts = np.asarray(comparison_pts)
+        if comparison_pts.ndim != 2 or comparison_pts.shape[1] != 2:
+            raise ValueError("comparison_pts must be complex or shape (m, 2)")
+        Y = comparison_pts
+
+    #Pval
+    return pted(X, Y)
+
 def compare_ginibre_vs_kostlan(
             ginibre: np.ndarray,
             kostlan: np.ndarray,
@@ -87,6 +123,9 @@ def compare_ginibre_vs_kostlan(
 
         print("Linear stat for ginibre:", linear_stats(ginibre))
         print("Linear stat for kostlan :", linear_stats(kostlan))
+
+        pted_result = pted_in_R2(ginibre, kostlan)
+        print("PTED result p-value:", pted_result)
 
         # --- Plot ---
         fig, axes = plt.subplots(1, 2, figsize=(8, 4))

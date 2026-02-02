@@ -116,15 +116,33 @@ def estimate_pi(points):
     inside = (x * x + y * y) <= 1.0
     return 4.0 * np.count_nonzero(inside) / points.shape[0]
 
-def estimate_call_mc(z, S0, K, r, sigma, T):
-    ST = S0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * z)
-    payoff = np.maximum(ST - K, 0.0)
-    return np.exp(-r * T) * payoff.mean()
+def estimate_2d_call(pts, K=1.5):
+    S1 = np.exp(pts[:, 0])
+    S2 = np.exp(pts[:, 1])
+    payoff = np.maximum(0.5 * (S1 + S2) - K, 0.0)
+    return payoff.mean()
 
-def call_bs(S0, K, r, sigma, T):
-    d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
-    d2 = d1 - sigma * np.sqrt(T)
-    return S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+def estimate_truth_mc(N=5_000_000, rho=0.7):
+    Z = np.random.multivariate_normal(
+        mean=[0, 0],
+        cov=[[1, rho], [rho, 1]],
+        size=N
+    )
+    U = norm.cdf(Z)          # dependent uniforms
+    return estimate_2d_call(U)
+
+
+def gaussian_copula_remap(U, rho):
+    """
+    U : (n,2) iid uniform points
+    rho : correlation parameter in (-1,1)
+    """
+    Z = norm.ppf(U)   # iid N(0,1)
+    L = np.linalg.cholesky([[1.0, rho], [rho, 1.0]])
+    Zc = Z @ L.T      # correlated normals
+    return norm.cdf(Zc)
+
 
 
 
